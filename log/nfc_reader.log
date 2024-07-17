@@ -1,0 +1,10 @@
+2024-07-17 13:29:09,726 nfc.clf:148 open [INFO]: searching for reader on path usb:054c:06c3
+2024-07-17 13:29:09,819 nfc.clf:151 open [INFO]: using SONY RC-S380/P NFC Port-100 v1.11 at usb:001:005
+2024-07-17 13:29:09,820 __main__:22 read [INFO]: Waiting for NFC Card ...
+2024-07-17 13:29:09,934 __main__:31 on_connect [DEBUG]: Get Student Number
+2024-07-17 13:29:09,935 __main__:33 on_connect [DEBUG]: sc: Service Code 100Bh (Service 64 Random RO w/o key)
+2024-07-17 13:29:09,937 __main__:35 on_connect [DEBUG]: bc: BlockCode(number=0, access=000, service=0)
+2024-07-17 13:29:09,953 __main__:37 on_connect [DEBUG]: 20103488
+2024-07-17 13:29:09,986 __main__:16 on_connect [DEBUG]: Detected NFC Card
+2024-07-17 13:29:09,987 __main__:60 <module> [INFO]: Student ID is 20103488
+2024-07-17 13:29:09,988 __main__:61 <module> [INFO]: Student Name is ｻﾄｳ ﾀｶｷ
