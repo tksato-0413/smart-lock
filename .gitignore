@@ -1,0 +1,7 @@
+__pycache__/
+log/
+parameters.json
+notebook/
+.vscode/
+result/
+tmp/
