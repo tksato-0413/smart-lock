@@ -13,5 +13,9 @@
     <a href="{% url 'register'%}">
         <button type="button">ユーザー登録</button>
     </a>
+    <form method="POST" action = "{% url 'control_motor'%}">
+        {% csrf_token %}
+        <button type="submit">Active Motor</button>
+    </form>
 </body>
 </html>
