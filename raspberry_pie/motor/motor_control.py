@@ -1,9 +1,12 @@
+import os
+import sys
 import RPi.GPIO as GPIO
 import time
 import json
 from pathlib import Path
 
-from .. import utils
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import utils
 
 
 def control(order,params):
@@ -20,8 +23,6 @@ def control(order,params):
        
     servo_pin = params["servo_pin"]
     freq = params["freq"]
-    unlock_param = params["unlock"]
-    lock_param = params["lock"]
     
     current_dir = Path(__file__).parent
     parent_dir = current_dir.parent
@@ -40,11 +41,15 @@ def control(order,params):
     logger.info(f"現在の鍵の角度：{current_angle} °C")
     
     orders={ # 指示に対するモーターの動作
-        "unlock":unlock(current_angle,pwm,unlock_param),
-        "lock":lock(current_angle,pwm,lock_param)
+        "unlock":unlock,
+        "lock":lock
     }
- 
-    status = orders.get(order,other_order(params,pwm,lock_param,order,logger))
+    
+    func = orders.get(order,"other_order")
+    if func == "other_order":
+        status = other_order(params,pwm,params["lock"],order,logger)
+    else:
+        status = func(current_angle,pwm,params[order])
     logger.info(status)
     return status
     
@@ -112,7 +117,7 @@ def other_order(current_angle,pwm,lock_param,msg,logger):
 
 
 if __name__ == "__main__":
-    order = "unlock"
+    order = "unock"
 
     with open('motor/motor_config.json', 'r') as f:
         params = json.load(f)

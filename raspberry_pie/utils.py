@@ -99,6 +99,8 @@ def set_logging(result_dir: str, file_name: str = "log",
     file_handler.setLevel(fileout_log_level.upper()) # ファイル出力ログレベル
     file_handler.setFormatter(formatter)  # フォーマットを指定
     logger.addHandler(file_handler)
+    
+    return logger
 
 
 def update_json(json_file: str, input_dict: dict[str, Any]) -> None:
