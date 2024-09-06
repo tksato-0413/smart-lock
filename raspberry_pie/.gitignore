@@ -6,3 +6,4 @@ notebook/
 result/
 tmp/
 venv/
+lock_status/

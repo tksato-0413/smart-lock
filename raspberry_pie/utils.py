@@ -95,7 +95,7 @@ def set_logging(result_dir: str, file_name: str = "log",
     logger.addHandler(handler)
     
     # ファイル出力へのログ出力設定
-    file_handler = FileHandler(f'{result_dir}/{file_name}.log', 'w')  # ログ出力ファイル
+    file_handler = FileHandler(f'{result_dir}/{file_name}.log', 'a+')  # ログ出力ファイル
     file_handler.setLevel(fileout_log_level.upper()) # ファイル出力ログレベル
     file_handler.setFormatter(formatter)  # フォーマットを指定
     logger.addHandler(file_handler)

@@ -48,9 +48,16 @@ def control(order,params):
     func = orders.get(order,"other_order")
     if func == "other_order":
         status = other_order(params,pwm,params["lock"],order,logger)
+        with open(file_path,'w') as f:
+            f.write("0")
     else:
         status = func(current_angle,pwm,params[order])
+        with open(file_path,'w') as f:
+            f.write(str(params[order]["angle"]))
     logger.info(status)
+    
+
+    
     return status
     
 def set_servo_angle(param,pwm):
@@ -59,7 +66,9 @@ def set_servo_angle(param,pwm):
         param   (dict): サーボモーターを動作させるためのパラメーター
         pwm     (object):PWM制御を行うためのオブジェクト
     """
+    pwm.start(7.0)
     pwm.ChangeDutyCycle(param["duty_cycle"])
+    time.sleep(2)
     
     
     
@@ -77,7 +86,7 @@ def unlock(current_angle,pwm,unlock_param):
         status = "Already unlocked."
     else:
         set_servo_angle(unlock_param,pwm)
-        status = "Ulocking"
+        status = "Unlocking"
         
     return status
     
@@ -117,7 +126,7 @@ def other_order(current_angle,pwm,lock_param,msg,logger):
 
 
 if __name__ == "__main__":
-    order = "unock"
+    order = "unlock"
 
     with open('motor/motor_config.json', 'r') as f:
         params = json.load(f)
