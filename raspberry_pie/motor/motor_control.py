@@ -1,79 +1,112 @@
 import RPi.GPIO as GPIO
 import time
 import json
+from pathlib import Path
+
+from .. import utils
 
 
 def control(order,params):
     """鍵の状態をコントロールするための関数
     Args:
-        order   (text): 解錠または施錠の指示
+        order   (str): 解錠または施錠の指示
         params  (dict): サーボモーターを動作させるためのパラメータ
         
     Return:
-        status  (text): 現在の鍵の状態を表す文字列
+        status  (str): 現在の鍵の状態を表す文字列
     """
+    
+    logger = utils.set_logging("log/","servo_status")
        
     servo_pin = params["servo_pin"]
     freq = params["freq"]
-    open_angle = params["unlock_angle"]
+    unlock_param = params["unlock"]
+    lock_param = params["lock"]
+    
+    current_dir = Path(__file__).parent
+    parent_dir = current_dir.parent
+    
+    logger.info("モーターを動作させます。")
     
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servo_pin,GPIO.OUT)
     pwm = GPIO.PWM(servo_pin,freq)
     
-    with open('lock_status/servo_angle.txt', 'r') as f:
+    file_path = parent_dir / 'lock_status' / 'servo_angle.txt'
+
+    with open(file_path, 'r') as f:
         current_angle = int(f.read().strip()) # 現在の鍵の角度
+        
+    logger.info(f"現在の鍵の角度：{current_angle} °C")
+    
     orders={ # 指示に対するモーターの動作
-        "unlock":unlock(current_angle,pwm),
-        "lock":lock(current_angle)
+        "unlock":unlock(current_angle,pwm,unlock_param),
+        "lock":lock(current_angle,pwm,lock_param)
     }
  
+    status = orders.get(order,other_order(params,pwm,lock_param,order,logger))
+    logger.info(status)
+    return status
     
-    status = orders.get(order,other_order(params))
-    
-def set_servo_angle(angle,pwm):
+def set_servo_angle(param,pwm):
     """実際にサーボモーターを動作させる関数
     Args:
-        angle   (int): モーターの回転角
-        pwm     (object):pwm制御を行うためのオブジェクト
+        param   (dict): サーボモーターを動作させるためのパラメーター
+        pwm     (object):PWM制御を行うためのオブジェクト
     """
+    pwm.ChangeDutyCycle(param["duty_cycle"])
     
-def unlock(current_angle,open_angle):
+    
+    
+def unlock(current_angle,pwm,unlock_param):
     """解錠を行うための関数
     Args:
         current_angle   (int) : 現在の鍵の角度
+        pwm             (object): PWM制御を行うためのオブジェクト
         params          (dict): サーボモーターを動作させるためのパラメータ
     Return:
-        status  (text): 現在の鍵の状態を示す文字列
+        status  (str): 現在の鍵の状態を示す文字列
     """
 
-    
-    if current_angle==open_angle:
+    if current_angle==unlock_param["angle"]:
         status = "Already unlocked."
     else:
-        a=1
+        set_servo_angle(unlock_param,pwm)
+        status = "Ulocking"
         
     return status
     
     
-def lock(current_angle):
+def lock(current_angle,pwm,lock_param):
     """施錠を行うための関数
     Args:
-    current_angle   (int) : 現在の鍵の角度
-        params      (dict): サーボモーターを動作させるためのパラメータ
+        current_angle   (int) : 現在の鍵の角度
+        pwm             (object): PWM制御を行うためのオブジェクト
+        params          (dict): サーボモーターを動作させるためのパラメータ
     Return:
-        status      (text): 現在の鍵の状態を示す文字列
+        status          (str): 現在の鍵の状態を示す文字列
     """
+    if current_angle==lock_param["angle"]:
+        status = "Already locked."
+    else:
+        set_servo_angle(lock_param,pwm)
+        status = "Locking"
+        
+    return status
 
-def other_order(current_angle):
+def other_order(current_angle,pwm,lock_param,msg,logger):
     """無効な指令が入力された場合の例外処理
     Args:
         params  (dict): サーボモーターを動作させるためのパラメータ
         
     Return:
-        status  (text): 無効な指令が与えられたことに対する警告文
+        warning_msg  (str): 無効な指令が与えられたことに対する警告文
     """
-    lock(current_angle)
+    status = lock(current_angle,pwm,lock_param)
+    
+    logger.warning(f"無効なメッセージが入力されました。\n 内容：{msg}")
+    
+    return status
     
     
 
@@ -84,4 +117,4 @@ if __name__ == "__main__":
     with open('motor/motor_config.json', 'r') as f:
         params = json.load(f)
     
-    control(order,params)
+    status = control(order,params)
