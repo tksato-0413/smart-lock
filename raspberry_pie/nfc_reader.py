@@ -4,7 +4,7 @@ from os.path import basename, splitext
 
 import nfc
 
-from raspberry_pie.utils import set_logging
+from utils import set_logging
 
 logger = getLogger(__name__)
 
