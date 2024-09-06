@@ -1,4 +1,5 @@
 {
     "servo_pin":17,
-    "freq":50
+    "freq":50,
+    "unlock_angle":90
 }
