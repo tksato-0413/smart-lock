@@ -126,7 +126,7 @@ def other_order(current_angle,pwm,lock_param,msg,logger):
 
 
 if __name__ == "__main__":
-    order = "unlock"
+    order = "lock"
 
     with open('motor/motor_config.json', 'r') as f:
         params = json.load(f)
