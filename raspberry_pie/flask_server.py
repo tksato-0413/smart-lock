@@ -64,7 +64,7 @@ def notify_external_server(message, status):
 
     data = {
         "datetime": str(datetime.datetime.now()),
-        "student_id": message["id"],
+        "user_id": message["user_id"],
         "authentication":message["authentication"],
         "status":status
     }
@@ -97,7 +97,12 @@ def toggle_motor(user_id,auth="fail"):
     else: # 登録外のユーザーデータを読み取った場合の処理
         status = control("lock", motor_config)
     
-    notify_external_server(user_id, status)
+    message = {
+        "user_id":user_id,
+        "authentication":True
+    }
+
+    notify_external_server(message, status)
     return jsonify({'message':status})
 
 @app.route('/http_motor', methods=['POST'])
@@ -122,6 +127,10 @@ def nfc_event():
     user_id = data.get("user_id")
     auth = authentication(user_id)
     status = toggle_motor(user_id, auth)
+    message = {
+        "user_id":user_id,
+        "authentication":True
+    }
     notify_external_server(user_id, status)
     return jsonify({'message':status})
 
