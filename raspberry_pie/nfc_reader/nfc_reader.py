@@ -1,9 +1,14 @@
+import os
+import sys
 from time import time
+import ndef
+import nfc
 from logging import getLogger
 from os.path import basename, splitext
 
-import nfc
 
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils import set_logging
 
 logger = getLogger(__name__)

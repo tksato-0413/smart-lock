@@ -7,3 +7,5 @@ result/
 tmp/
 venv/
 lock_status/
+config.json
+*.db

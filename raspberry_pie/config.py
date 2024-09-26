@@ -1,7 +1,7 @@
 
 
 from dataclasses import dataclass, field
-from raspberry_pie.utils import dump_params
+from utils import dump_params
 from argparse import ArgumentParser
 
 
@@ -14,8 +14,8 @@ class Parameters:
     args: dict = field(default_factory=lambda: {})  # コマンドライン引数
     run_date: str = ''  # 実行時の時刻
     git_revision: str = ''  # 実行時のプログラムのGitのバージョン
-    
-    wait_time: int = 5  # カードの読み込み待ち時間。単位は秒
+    external_server_url: str='' # 外部サーバーのURL(ローカルIPアドレス)
+    wait_time: int = 10  # カードの読み込み待ち時間。単位は秒
 
 
 def common_args(parser: 'ArgumentParser'):
@@ -29,4 +29,4 @@ def common_args(parser: 'ArgumentParser'):
 
 
 if __name__ == "__main__":
-    dump_params(Parameters(), './', partial=True)  # デフォルトパラメータを
+    dump_params(Parameters(), './', partial=True)

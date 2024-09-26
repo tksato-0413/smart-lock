@@ -49,7 +49,7 @@ def control(order,params):
     if func == "other_order":
         status = other_order(params,pwm,params["lock"],order,logger)
         with open(file_path,'w') as f:
-            f.write("0")
+            f.write(str(params["lock"]["angle"]))
     else:
         status = func(current_angle,pwm,params[order])
         with open(file_path,'w') as f:
@@ -132,3 +132,4 @@ if __name__ == "__main__":
         params = json.load(f)
     
     status = control(order,params)
+    print(status)

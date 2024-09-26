@@ -44,7 +44,7 @@ def setup_params(args_dict: dict[str, Any], path: str = None) -> dict[str, Any]:
     return param_dict
 
 
-def dump_params(params: 'config.Parameters', outdir: str, partial: bool = False) -> None:
+def dump_params(params: 'Parameters', outdir: str, partial: bool = False) -> None:
     """
     データクラスで定義されたパラメータをjson出力する関数
     Args:
@@ -59,7 +59,7 @@ def dump_params(params: 'config.Parameters', outdir: str, partial: bool = False)
         del params_dict['args']  # jsonからし指定しないキーを削除
         del params_dict['run_date']  # jsonからし指定しないキーを削
         del params_dict['git_revision']  # jsonからし指定しないキーを削
-    with open(f'{outdir}/parameters.json', 'w') as f:
+    with open(f'{outdir}/config.json', 'w') as f:
         json.dump(params_dict, f, indent=4)  # デフォルト設定をファイル出力
 
 
@@ -117,43 +117,3 @@ def update_json(json_file: str, input_dict: dict[str, Any]) -> None:
 
     with open(json_file, 'w') as f:
         json.dump(df, f, indent=4)
-
-
-def get_gpu_info(nvidia_smi_path: str = 'nvidia-smi', no_units: bool = True) -> str:
-    """
-    空いているgpuの番号を持ってくるプログラム
-    Returns:
-        str: 空いているgpu番号 or 'cpu'
-    """
-    keys = (
-        'index',
-        'uuid',
-        'name',
-        'timestamp',
-        'memory.total',
-        'memory.free',
-        'memory.used',
-        'utilization.gpu',
-        'utilization.memory'
-    )
-    if torch.cuda.is_available():
-        nu_opt = '' if not no_units else ',nounits'
-        cmd = '%s --query-gpu=%s --format=csv,noheader%s' % (nvidia_smi_path, ','.join(keys), nu_opt)
-        output = subprocess.check_output(cmd, shell=True)
-        lines = output.decode().split('\n')
-        lines = [line.strip() for line in lines if line.strip() != '']
-
-        gpu_info = [{k: v for k, v in zip(keys, line.split(', '))} for line in lines]
-
-        min_gpu_index = 0
-        min_gpu_memory_used = 100
-        for gpu in gpu_info:
-            gpu_index = gpu['index']
-            gpu_memory = int(gpu['utilization.gpu'])
-            if min_gpu_memory_used >= gpu_memory:
-                min_gpu_memory_used = gpu_memory
-                min_gpu_index = int(gpu_index)
-
-        return "cuda:" + str(min_gpu_index)
-    else:
-        return 'cpu'
