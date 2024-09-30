@@ -2,11 +2,11 @@
     "servo_pin":17,
     "freq":50,
     "unlock":{
-        "angle":-110,
-        "duty_cycle":12.0
+        "angle":100,
+        "duty_cycle":12.53
     },
     "lock":{
-        "angle":0,
-        "duty_cycle":7.25
+        "angle":20,
+        "duty_cycle":8.31
     }
 }

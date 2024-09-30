@@ -8,6 +8,18 @@ from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 
+def neutral(params):
+    """モーターをニュートラルに戻す関数
+    """
+    servo_pin = params["servo_pin"]
+    freq = params["freq"]
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servo_pin,GPIO.OUT)
+    pwm = GPIO.PWM(servo_pin,freq)
+    pwm.start(7.0)
+    time.sleep(1)
+    pwm.ChangeDutyCycle(7.25)
+    time.sleep(1)
 
 def control(order,params):
     """鍵の状態をコントロールするための関数
@@ -47,18 +59,18 @@ def control(order,params):
     
     func = orders.get(order,"other_order")
     if func == "other_order":
-        status = other_order(params,pwm,params["lock"],order,logger)
+        status, current_state = other_order(params,pwm,params["lock"],order,logger)
         with open(file_path,'w') as f:
             f.write(str(params["lock"]["angle"]))
     else:
-        status = func(current_angle,pwm,params[order])
+        status, current_state = func(current_angle,pwm,params[order])
         with open(file_path,'w') as f:
             f.write(str(params[order]["angle"]))
     logger.info(status)
     
 
     
-    return status
+    return status, current_state
     
 def set_servo_angle(param,pwm):
     """実際にサーボモーターを動作させる関数
@@ -88,7 +100,7 @@ def unlock(current_angle,pwm,unlock_param):
         set_servo_angle(unlock_param,pwm)
         status = "Unlocking"
         
-    return status
+    return status, str(unlock_param["angle"])
     
     
 def lock(current_angle,pwm,lock_param):
@@ -106,7 +118,7 @@ def lock(current_angle,pwm,lock_param):
         set_servo_angle(lock_param,pwm)
         status = "Locking"
         
-    return status
+    return status, str(lock_param["angle"])
 
 def other_order(current_angle,pwm,lock_param,msg,logger):
     """無効な指令が入力された場合の例外処理
@@ -126,10 +138,13 @@ def other_order(current_angle,pwm,lock_param,msg,logger):
 
 
 if __name__ == "__main__":
-    order = "lock"
-
     with open('motor/motor_config.json', 'r') as f:
         params = json.load(f)
-    
-    status = control(order,params)
-    print(status)
+    args = sys.argv
+    if args[1] =="neutral":
+        neutral(params)
+    else:
+        order = "unlock"
+
+        status = control(order,params)
+        print(status)
