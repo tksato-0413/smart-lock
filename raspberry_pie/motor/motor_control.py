@@ -10,6 +10,9 @@ import utils
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = Path(current_dir).parent # 親ディレクトリの取得(loggerの設定のため)
 
+log_dir = os.path.join(parent_dir,"log/")
+logger = utils.set_logging(log_dir,"servo_status")
+
 def neutral(params):
     """モーターをニュートラルに戻す関数
     """
@@ -35,8 +38,6 @@ def control(order,params, current_angle):
         current_state (str):  操作後の鍵の角度
     """
     
-    log_dir = os.path.join(parent_dir,"log/")
-    logger = utils.set_logging(log_dir,"servo_status")
        
     servo_pin = params["servo_pin"]
     freq = params["freq"]

@@ -118,7 +118,7 @@ def toggle_motor(user_id,auth="fail"):
             f.write(current_angle)
 
     else: # 登録外のユーザーデータを読み取った場合の処理
-        status = control("lock", motor_config)
+        status = control("lock", motor_config, current_angle)
     
     message = {
         "user_id":user_id,

@@ -69,13 +69,16 @@ class UserCardReader(NFCReader):
 if __name__=='__main__':
     log_file_name = splitext(basename(__file__))[0]
     set_logging('log',log_file_name, stdout_log_level = "DEBUG",)
-    while True:
-        nfc_reader = UserCardReader()
-        if nfc_reader.read(wait_time=10):
-            user_id = nfc_reader.get_user_id()
-            logger.info(f'user ID is {user_id}')
-            logger.info(f'user Name is {nfc_reader.get_user_name()}')
-            time.sleep(10)
+    try:
+        while True:
+            nfc_reader = UserCardReader()
+            if nfc_reader.read(wait_time=10):
+                user_id = nfc_reader.get_user_id()
+                logger.info(f'user ID is {user_id}')
+                logger.info(f'user Name is {nfc_reader.get_user_name()}')
+                time.sleep(10)
 
-        else:
-            logger.info("Not Detected NFC Card")
+            else:
+                logger.info("Not Detected NFC Card")
+    except KeyboardInterrupt:
+        logger.info("Stoped by users")
