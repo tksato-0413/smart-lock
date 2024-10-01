@@ -7,6 +7,8 @@ from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = Path(current_dir).parent # 親ディレクトリの取得(loggerの設定のため)
 
 def neutral(params):
     """モーターをニュートラルに戻す関数
@@ -21,23 +23,23 @@ def neutral(params):
     pwm.ChangeDutyCycle(7.25)
     time.sleep(1)
 
-def control(order,params):
+def control(order,params, current_angle):
     """鍵の状態をコントロールするための関数
     Args:
         order   (str): 解錠または施錠の指示
         params  (dict): サーボモーターを動作させるためのパラメータ
+        current_angle (str): 現在の鍵の角度
         
     Return:
         status  (str): 現在の鍵の状態を表す文字列
+        current_state (str):  操作後の鍵の角度
     """
     
-    logger = utils.set_logging("log/","servo_status")
+    log_dir = os.path.join(parent_dir,"log/")
+    logger = utils.set_logging(log_dir,"servo_status")
        
     servo_pin = params["servo_pin"]
     freq = params["freq"]
-    
-    current_dir = Path(__file__).parent
-    parent_dir = current_dir.parent
     
     logger.info("モーターを動作させます。")
     
@@ -45,10 +47,10 @@ def control(order,params):
     GPIO.setup(servo_pin,GPIO.OUT)
     pwm = GPIO.PWM(servo_pin,freq)
     
-    file_path = parent_dir / 'lock_status' / 'servo_angle.txt'
+    #file_path = parent_dir / 'lock_status' / 'servo_angle.txt'
 
-    with open(file_path, 'r') as f:
-        current_angle = int(f.read().strip()) # 現在の鍵の角度
+    #with open(file_path, 'r') as f:
+    #    current_angle = int(f.read().strip()) # 現在の鍵の角度
         
     logger.info(f"現在の鍵の角度：{current_angle} °C")
     
@@ -59,13 +61,14 @@ def control(order,params):
     
     func = orders.get(order,"other_order")
     if func == "other_order":
-        status, current_state = other_order(params,pwm,params["lock"],order,logger)
-        with open(file_path,'w') as f:
-            f.write(str(params["lock"]["angle"]))
+        status, current_state, warn_msg = other_order(params,pwm,params["lock"],order,logger)
+        logger.warning(f"無効なメッセージが入力されました。: {warn_msg}")
+        #with open(file_path,'w') as f:
+        #    f.write(str(params["lock"]["angle"]))
     else:
         status, current_state = func(current_angle,pwm,params[order])
-        with open(file_path,'w') as f:
-            f.write(str(params[order]["angle"]))
+        #with open(file_path,'w') as f:
+        #    f.write(str(params[order]["angle"]))
     logger.info(status)
     
 
@@ -87,14 +90,14 @@ def set_servo_angle(param,pwm):
 def unlock(current_angle,pwm,unlock_param):
     """解錠を行うための関数
     Args:
-        current_angle   (int) : 現在の鍵の角度
+        current_angle   (str) : 現在の鍵の角度
         pwm             (object): PWM制御を行うためのオブジェクト
         params          (dict): サーボモーターを動作させるためのパラメータ
     Return:
         status  (str): 現在の鍵の状態を示す文字列
     """
 
-    if current_angle==unlock_param["angle"]:
+    if current_angle==str(unlock_param["angle"]):
         status = "Already unlocked."
     else:
         set_servo_angle(unlock_param,pwm)
@@ -106,13 +109,13 @@ def unlock(current_angle,pwm,unlock_param):
 def lock(current_angle,pwm,lock_param):
     """施錠を行うための関数
     Args:
-        current_angle   (int) : 現在の鍵の角度
+        current_angle   (str) : 現在の鍵の角度
         pwm             (object): PWM制御を行うためのオブジェクト
         params          (dict): サーボモーターを動作させるためのパラメータ
     Return:
         status          (str): 現在の鍵の状態を示す文字列
     """
-    if current_angle==lock_param["angle"]:
+    if current_angle==str(lock_param["angle"]):
         status = "Already locked."
     else:
         set_servo_angle(lock_param,pwm)
@@ -123,16 +126,18 @@ def lock(current_angle,pwm,lock_param):
 def other_order(current_angle,pwm,lock_param,msg,logger):
     """無効な指令が入力された場合の例外処理
     Args:
-        params  (dict): サーボモーターを動作させるためのパラメータ
+        current_angle   (str): 現在の鍵の角度
+        pwm             (object): pwm制御を行うためのオブジェクト
+        lock_param      ()
         
     Return:
-        warning_msg  (str): 無効な指令が与えられたことに対する警告文
+        warn_msg  (str): 無効な指令が与えられたことに対する警告文
     """
-    status = lock(current_angle,pwm,lock_param)
+    status, current_state = lock(current_angle,pwm,lock_param)
     
     logger.warning(f"無効なメッセージが入力されました。\n 内容：{msg}")
     
-    return status
+    return status, current_state, warn_msg
     
     
 

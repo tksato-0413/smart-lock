@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-
+import os
 import requests
 import json
 import time
@@ -11,13 +11,20 @@ import utils
 
 app = Flask(__name__)
 
-with open("config.json") as f: 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(current_dir, 'config.json') # config.json への相対パスを指定
+motor_config_path = os.path.join(current_dir,"motor/motor_config.json")
+txt_path = os.path.join(current_dir,"lock_status/servo_angle.txt") # 鍵の角度を保存するファイルへのパス
+log_path = os.path.join(current_dir,"log/") # logファイルの出力先のpath を指定
+
+with open(config_path) as f: 
     config = json.load(f)
 external_server_url = config["external_server_url"]
 
 motor_config =None
-current_state = None
-logger = utils.set_logging("log/", "HTTP_status")
+current_angle = None
+
+logger = utils.set_logging(log_path, "HTTP_status")
 
 def authentication(user_id):
     """読み取ったユーザーIDが登録済みかどうかを確認する関数
@@ -28,7 +35,8 @@ def authentication(user_id):
     """
     logger.info("accessing database")
     try:
-        conn = sqlite3.connect('users.db')
+        db_path = os.path.join(current_dir,"users.db")
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
 
         cursor.execute("SELECT COUNT(1) FROM users WHERE username = ?", (user_id,))
@@ -50,10 +58,12 @@ def load_motor_config():
     """
     global motor_config
     try:
-        with open("motor/motor_config.json", "r") as f:
+        with open(motor_config_path, "r") as f:
             motor_config = json.load(f)
+        logger.info(str(motor_config))
     except:
         motor_config = None
+    
 
 def notify_external_server(message, status):
     """鍵の状態を外部の記録サーバーに通知する関数
@@ -89,18 +99,23 @@ def toggle_motor(user_id,auth="fail"):
     """
     #auth = "accept" # データベースの設計が完了するまで仮で認証させる
     global motor_config
-    global current_state
+    global current_angle
     status = None
     logger.info(f"users status: {auth}")
     if motor_config is None:
+        logger.error("モーターの設定ファイルへのアクセスに失敗")
         return jsonify({'status': 'error', 'message':'Do not load motor config.'}),500
     if auth == "accept":
-        if current_state == str(motor_config["lock"]["angle"]):
-            status, current_state = control("unlock",motor_config)
-        elif current_state == str(motor_config["unlock"]["angle"]):
-            status, current_state = control("lock", motor_config)
+        logger.info("ユーザーが認証されました")
+        if current_angle == str(motor_config["lock"]["angle"]):
+            status, current_angle = control("unlock",motor_config, current_angle)
+        elif current_angle == str(motor_config["unlock"]["angle"]):
+            status, current_angle = control("lock", motor_config, current_angle)
         else:
-            status = control("lock", motor_config)
+            status, current_angle = control("lock", motor_config, current_angle)
+            
+        with open(txt_path, "w") as f:
+            f.write(current_angle)
 
     else: # 登録外のユーザーデータを読み取った場合の処理
         status = control("lock", motor_config)
@@ -146,7 +161,8 @@ def nfc_event():
 
 if __name__=="__main__":
     load_motor_config()
-    with open("lock_status/servo_angle.txt", "r") as f:
-        current_state = f.read()
     
-    app.run(host = '0.0.0.0', port =556)
+    with open(txt_path, "r") as f:
+        current_angle = f.read()
+    
+    app.run(host = '0.0.0.0', port =5560)

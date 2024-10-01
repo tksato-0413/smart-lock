@@ -51,7 +51,7 @@ class UserCardReader(NFCReader):
     def get_user_id(self):
         try:
             user_id = str(self._user_id)
-            response = requests.post('http://localhost:556/nfc_event', json = {"user_id":user_id})
+            response = requests.post('http://localhost:5560/nfc_event', json = {"user_id":user_id})
             if response.status_code ==200:
                 logger.info(f"Flask_server に通知しました")
             else:
